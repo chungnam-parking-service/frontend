@@ -1,0 +1,120 @@
+.app {
+  max-width: 480px;
+  margin: auto;
+  background: #fff;
+  min-height: 100dvh;
+}
+main {
+  min-height: 60dvh;
+}
+.app-header {
+  height: 79px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -1.2px;
+}
+.brand > span {
+  width: 41px;
+  height: 41px;
+  border-radius: 13px;
+  background: var(--green);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+.brand-small {
+  font-size: 19px;
+}
+.menu {
+  position: relative;
+}
+.menu summary {
+  list-style: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.menu summary::-webkit-details-marker {
+  display: none;
+}
+.menu nav {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  width: 200px;
+  background: white;
+  box-shadow: 0 8px 30px #1e3d2817;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 7px;
+  z-index: 20;
+}
+.menu nav a {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 10px 12px;
+  font-size: 13px;
+  border-radius: 7px;
+}
+.menu nav a:hover {
+  background: var(--soft);
+}
+.demo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 14px;
+  font-size: 10px;
+  line-height: 1.6;
+  background: #f1f5ec;
+  color: #718367;
+  border-block: 1px solid #e7eddf;
+}
+.page {
+  padding: 24px 20px 36px;
+}
+.page-header {
+  height: 69px;
+  padding: 10px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 15;
+}
+.page-header h1 {
+  font-size: 16px;
+  letter-spacing: -0.4px;
+  font-weight: 650;
+  flex: 1;
+}
+.icon-button {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  background: transparent;
+  border-radius: 10px;
+}
+.icon-button:hover {
+  background: var(--soft);
+}

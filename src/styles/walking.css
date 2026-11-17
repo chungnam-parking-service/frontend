@@ -1,0 +1,102 @@
+.walking-page > .map-caption {
+  margin-bottom: 29px;
+}
+.walking-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f7f9f2;
+  gap: 15px;
+}
+.walking-stats dt {
+  font-size: 11px;
+  color: #8c9b80;
+}
+.walking-stats dd {
+  margin: 13px 0 0;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.5px;
+}
+.walking-stats dd > span {
+  font-size: 13px;
+  margin-left: 4px;
+  font-weight: 400;
+}
+.route-endpoints {
+  margin: 25px 0;
+  display: grid;
+  gap: 22px;
+  padding: 19px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+.route-endpoints > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #7c946b;
+}
+.route-endpoints span {
+  display: grid;
+  gap: 6px;
+  font-size: 10px;
+  color: #9aaa8a;
+}
+.route-endpoints strong {
+  font-size: 13px;
+  font-weight: 500;
+  color: #69845a;
+}
+.walking-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 25px;
+}
+.walking-steps li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  position: relative;
+  padding-bottom: 23px;
+  min-height: 55px;
+}
+.walking-steps li:last-child {
+  padding-bottom: 0;
+}
+.walking-steps li > span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #edf3e5;
+  color: #7c9668;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.walking-steps li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  height: calc(100% - 30px);
+  border-left: 1px dashed #dbe5d2;
+  left: 12px;
+  top: 30px;
+}
+.walking-steps p {
+  color: #7b8e6d;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.walking-page > .button {
+  width: 100%;
+  margin-top: 20px;
+}
+.empty-walking {
+  padding: 15px;
+  background: var(--soft);
+  border-radius: 10px;
+}
