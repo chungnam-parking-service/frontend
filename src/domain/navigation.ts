@@ -41,5 +41,6 @@ export function parkingMapUrl(lot: ParkingLot) {
 export function walkingUrl(lot: ParkingLot, place: Place) {
   const from = lot.entranceCoordinates,
     to = place.coordinates;
+  if (from.latitude === to.latitude && from.longitude === to.longitude) return null;
   return `https://map.kakao.com/link/by/walk/${encodeURIComponent(lot.name)},${from.latitude},${from.longitude}/${encodeURIComponent(place.name)},${to.latitude},${to.longitude}`;
 }

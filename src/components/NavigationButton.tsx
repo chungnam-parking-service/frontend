@@ -8,7 +8,7 @@ import {
   saveNavigationApp,
   type NavigationApp,
 } from '../domain/navigation';
-import { isVerifiedEntrance, type ParkingLot } from '../domain/parking';
+import { coordinateInfo, isVerifiedEntrance, type ParkingLot } from '../domain/parking';
 import { Notice } from './Feedback';
 
 export function NavigationButton({ lot, isDemo }: { lot: ParkingLot; isDemo: boolean }) {
@@ -16,7 +16,7 @@ export function NavigationButton({ lot, isDemo }: { lot: ParkingLot; isDemo: boo
   const [preferred, setPreferred] = useState(readNavigationApp);
   const [notice, setNotice] = useState('');
   const verified = isVerifiedEntrance(lot);
-  const label = verified ? '이 입구로 길 안내' : '이 주차장으로 길 안내';
+  const info = coordinateInfo(lot);
   const selected = navigationApps.find((app) => app.id === preferred);
   return (
     <>
@@ -29,7 +29,7 @@ export function NavigationButton({ lot, isDemo }: { lot: ParkingLot; isDemo: boo
         ) : (
           <button className="button button-primary" onClick={() => setOpen(true)}>
             <Navigation size={18} />
-            {label}
+            {info.action}
           </button>
         )}
         <button
@@ -82,6 +82,7 @@ function NavigationDialog({
   const [app, setApp] = useState(initialApp);
   const [remember, setRemember] = useState(true);
   const verified = isVerifiedEntrance(lot);
+  const info = coordinateInfo(lot);
   useEffect(() => {
     const dialog = ref.current;
     const previousFocus = document.activeElement;
@@ -111,11 +112,7 @@ function NavigationDialog({
         <span className="eyebrow">익숙한 앱으로 편하게</span>
         <h2 id="navigation-title">어떤 내비로 출발할까요?</h2>
         <p className="muted">{lot.name}</p>
-        {!verified && (
-          <Notice warning>
-            실제 입구가 확인되지 않은 좌표예요. 주차장 주변에 도착하면 현장 입구를 확인해 주세요.
-          </Notice>
-        )}
+        {!verified && <Notice warning>{info.description}</Notice>}
         <fieldset className="navigation-options">
           <legend className="sr-only">내비게이션 앱</legend>
           {navigationApps.map((item) => (
@@ -154,7 +151,7 @@ function NavigationDialog({
               onClick={() => onChoose(app, remember)}
             >
               <Navigation size={18} />
-              {verified ? '입구로 안내 시작' : '주차장 위치로 안내 시작'}
+              {info.start}
             </a>
             <a
               className="text-link web-map-link"

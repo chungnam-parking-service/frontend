@@ -1,6 +1,6 @@
 import { ChevronRight, Footprints, ParkingCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { isVerifiedEntrance, relationshipLabels, type PlaceParkingOption } from '../domain/parking';
+import { coordinateInfo, relationshipLabels, type PlaceParkingOption } from '../domain/parking';
 
 export function parkingPath(placeId: string, lotId: string, search = '') {
   return `/places/${encodeURIComponent(placeId)}/parking/${encodeURIComponent(lotId)}${search}`;
@@ -30,7 +30,7 @@ export function ParkingCard({
               ? `목적지까지 도보 ${option.walkingMinutes}분`
               : '도보 시간 정보 없음'}
           </span>
-          <span>{isVerifiedEntrance(option.lot) ? '입구 확인' : '입구 미확인'}</span>
+          <span>{coordinateInfo(option.lot).label}</span>
         </div>
       </div>
       <ChevronRight size={19} aria-hidden="true" />

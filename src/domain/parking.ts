@@ -29,7 +29,7 @@ export const parkingLotSchema = z.object({
   feeDescription: z.string().nullable(),
   hoursDescription: z.string().nullable(),
   verifiedAt: z.string().datetime({ offset: true }).nullable(),
-  // 백엔드 v1에는 없는 선택 필드. 없으면 입구 정확도를 단정하지 않는다.
+  // v1.1: 입구 미확인 시설도 대표 좌표로 제공한다. 이전 서버의 필드 누락도 수용한다.
   coordinateType: z.enum(['entrance', 'representative', 'unknown']).optional(),
 });
 
@@ -62,9 +62,25 @@ export type ParkingLot = z.infer<typeof parkingLotSchema>;
 export type PlaceParkingOption = z.infer<typeof parkingOptionSchema>;
 export type PlaceParkingResponse = z.infer<typeof placeParkingSchema>;
 export type SearchPlacesResponse = z.infer<typeof searchPlacesSchema>;
+export interface SearchOptions {
+  limit?: number;
+}
+export const DEFAULT_SEARCH_LIMIT = 20;
+export const MAX_SEARCH_LIMIT = 50;
+
+export function searchLimit(limit = DEFAULT_SEARCH_LIMIT) {
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_SEARCH_LIMIT) {
+    throw new RangeError('검색 결과 수는 1–50 사이의 정수여야 합니다.');
+  }
+  return limit;
+}
 
 export interface ParkingApi {
-  searchPlaces(query: string, signal?: AbortSignal): Promise<SearchPlacesResponse>;
+  searchPlaces(
+    query: string,
+    signal?: AbortSignal,
+    options?: SearchOptions,
+  ): Promise<SearchPlacesResponse>;
   getPlaceParking(placeId: string, signal?: AbortSignal): Promise<PlaceParkingResponse>;
 }
 export const statusLabels: Record<ParkingStatus, string> = {
@@ -92,6 +108,35 @@ export function getParkingOptions(data: PlaceParkingResponse) {
 }
 export function isVerifiedEntrance(lot: ParkingLot) {
   return lot.coordinateType === 'entrance';
+}
+
+const coordinateDescriptions = {
+  entrance: {
+    label: '입구 확인',
+    title: '주차장 입구 위치',
+    description: '차량 진입 입구 좌표예요. 현장 진입 안내도 확인해 주세요.',
+    action: '이 입구로 길 안내',
+    start: '입구로 안내 시작',
+  },
+  representative: {
+    label: '대표 위치',
+    title: '매장·주차장 대표 위치',
+    description:
+      '매장 또는 주차장의 대표 좌표예요. 실제 주차장이나 차량 진입 입구와 다를 수 있어요.',
+    action: '대표 위치로 길 안내',
+    start: '대표 위치로 안내 시작',
+  },
+  unknown: {
+    label: '입구 미확인',
+    title: '주차장 위치',
+    description: '실제 입구가 확인되지 않은 좌표예요. 도착 후 현장 입구를 확인해 주세요.',
+    action: '이 위치로 길 안내',
+    start: '선택한 위치로 안내 시작',
+  },
+} as const;
+
+export function coordinateInfo(lot: ParkingLot) {
+  return coordinateDescriptions[lot.coordinateType ?? 'unknown'];
 }
 export function formatVerifiedAt(value: string | null) {
   if (!value) return '확인 시점 정보 없음';

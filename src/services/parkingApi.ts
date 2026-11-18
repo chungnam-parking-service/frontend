@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { placeParkingSchema, searchPlacesSchema, type ParkingApi } from '../domain/parking';
+import {
+  placeParkingSchema,
+  searchPlacesSchema,
+  searchLimit,
+  type ParkingApi,
+} from '../domain/parking';
 import { mockParkingApi } from '../mocks/parkingApi';
 import { ApiError } from './ApiError';
 
@@ -55,8 +60,12 @@ export function createHttpParkingApi({
     }
   }
   return {
-    searchPlaces: (query, signal) =>
-      get(`/places?query=${encodeURIComponent(query.trim())}`, searchPlacesSchema, signal),
+    searchPlaces: (query, signal, options) =>
+      get(
+        `/places?query=${encodeURIComponent(query.trim())}&limit=${searchLimit(options?.limit)}`,
+        searchPlacesSchema,
+        signal,
+      ),
     getPlaceParking: (id, signal) =>
       get(`/places/${encodeURIComponent(id)}/parking`, placeParkingSchema, signal),
   };

@@ -7,7 +7,11 @@ import { useRequest } from '../hooks/useRequest';
 import { isMockMode, parkingApi } from '../services/parkingApi';
 
 export function HomePage() {
-  const load = useCallback((signal: AbortSignal) => parkingApi.searchPlaces('충', signal), []);
+  const load = useCallback(
+    (signal: AbortSignal) =>
+      parkingApi.searchPlaces(isMockMode ? '충' : '천안', signal, { limit: 3 }),
+    [],
+  );
   const { state, retry } = useRequest(load, 'home-places');
   const featured =
     state.status === 'success'

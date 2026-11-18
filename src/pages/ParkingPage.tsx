@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { Camera, Clock3, Footprints, MapPin, ShieldCheck, Ticket } from 'lucide-react';
 import {
   formatVerifiedAt,
+  coordinateInfo,
   isVerifiedEntrance,
   relationshipLabels,
   type ParkingLot,
@@ -61,17 +62,18 @@ function ParkingContent({
   const { lot } = option;
   const { search } = useLocation();
   const verified = isVerifiedEntrance(lot);
+  const info = coordinateInfo(lot);
   const primary = data.primaryParking.some((item) => item.lot.id === lot.id);
   const points = useMemo(
     () => [
       {
         id: lot.id,
-        label: lot.name,
+        label: `${lot.name} · ${info.label}`,
         coordinates: lot.entranceCoordinates,
         kind: 'parking' as const,
       },
     ],
-    [lot],
+    [lot, info.label],
   );
   const walkPath = `/places/${encodeURIComponent(data.place.id)}/parking/${encodeURIComponent(lot.id)}/walk${search}`;
   return (
@@ -82,7 +84,7 @@ function ParkingContent({
         <h2 className="detail-title">{lot.name}</h2>
         <p className="address">
           <MapPin size={15} />
-          {lot.address}
+          {lot.address || '주소 정보 없음'}
         </p>
         {data.isDemo && <Notice>체험용 데이터예요. 실제 방문·길안내에 사용할 수 없어요.</Notice>}
         <section className="fee-panel">
@@ -107,17 +109,11 @@ function ParkingContent({
         )}
         <section className="detail-section">
           <div className="section-heading">
-            <h2>{verified ? '주차장 입구 위치' : '주차장 위치'}</h2>
-            <span className={`location-badge${verified ? ' verified' : ''}`}>
-              {verified ? '입구 확인' : '입구 미확인'}
-            </span>
+            <h2>{info.title}</h2>
+            <span className={`location-badge${verified ? ' verified' : ''}`}>{info.label}</span>
           </div>
           <MapView points={points} label={`${lot.name} 위치 지도`} />
-          {!verified && (
-            <p className="fine-print map-caption">
-              대표 좌표일 수 있어요. 실제 차량 진입 입구와 다를 수 있습니다.
-            </p>
-          )}
+          {!verified && <p className="fine-print map-caption">{info.description}</p>}
           <p className="entrance-guide">
             <MapPin size={17} />
             {lot.entranceGuide ?? '등록된 진입 안내가 없어요. 현장 표지판을 확인해 주세요.'}

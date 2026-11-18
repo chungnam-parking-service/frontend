@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Clock3, MapPin, ParkingCircle } from 'lucide-react';
-import { getParkingOptions, type PlaceParkingResponse } from '../domain/parking';
+import { coordinateInfo, getParkingOptions, type PlaceParkingResponse } from '../domain/parking';
 import { usePlaceParking } from '../hooks/usePlaceParking';
 import { PageHeader } from '../components/PageHeader';
 import { StatusBadge } from '../components/PlaceCard';
@@ -17,7 +17,7 @@ export function DestinationPage() {
     <>
       <PageHeader
         title="목적지 주차 안내"
-        backTo={params.has('q') ? `/search?q=${encodeURIComponent(params.get('q') ?? '')}` : '/'}
+        backTo={params.has('q') ? `/search?${params.toString()}` : '/'}
       />
       <RequestView state={state} retry={retry}>
         {(data) => <DestinationContent data={data} />}
@@ -36,7 +36,7 @@ function DestinationContent({ data }: { data: PlaceParkingResponse }) {
       { id: place.id, label: place.name, coordinates: place.coordinates, kind: 'place' as const },
       ...options.map(({ lot }) => ({
         id: lot.id,
-        label: lot.name,
+        label: `${lot.name} · ${coordinateInfo(lot).label}`,
         coordinates: lot.entranceCoordinates,
         kind: 'parking' as const,
       })),
@@ -50,7 +50,7 @@ function DestinationContent({ data }: { data: PlaceParkingResponse }) {
         <h2>{place.name}</h2>
         <p className="address">
           <MapPin size={15} />
-          {place.address}
+          {place.address || '주소 정보 없음'}
         </p>
         <p className="address">
           <Clock3 size={15} />
@@ -72,7 +72,7 @@ function DestinationContent({ data }: { data: PlaceParkingResponse }) {
       <MapView points={points} onSelect={(id) => navigate(parkingPath(place.id, id, search))} />
       <p className="fine-print map-caption">
         {options.length
-          ? '주차장 핀이나 아래 목록을 선택해 주세요. 입구 미확인 좌표는 대표 위치일 수 있어요.'
+          ? '주차장 핀이나 아래 목록을 선택해 주세요. 대표 위치는 실제 주차장이나 입구와 다를 수 있어요.'
           : '현재 확인된 목적지 위치만 표시하고 있어요.'}
       </p>
       <div className="section-heading">

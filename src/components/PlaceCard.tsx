@@ -34,7 +34,7 @@ export function PlaceCard({
         <StatusBadge status={place.parkingStatus} />
       </div>
       <p className="place-meta">
-        {place.address}
+        {place.address || '주소 정보 없음'}
         {place.category && ` · ${place.category}`}
       </p>
       <div className="card-bottom">

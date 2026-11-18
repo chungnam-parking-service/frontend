@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { getParkingOptions, isVerifiedEntrance, placeParkingSchema } from '../src/domain/parking';
+import {
+  coordinateInfo,
+  getParkingOptions,
+  isVerifiedEntrance,
+  placeParkingSchema,
+  searchLimit,
+} from '../src/domain/parking';
 import { navigationUrl, walkingUrl } from '../src/domain/navigation';
 import { placeParkingData } from '../src/mocks/data';
 
@@ -9,9 +15,26 @@ describe('백엔드 계약과 위치 정보', () => {
   });
   it('입구 출처가 없는 좌표를 확인된 입구로 표시하지 않는다', () => {
     const lot = placeParkingData[0].primaryParking[0].lot;
-    expect(isVerifiedEntrance(lot)).toBe(false);
+    expect(isVerifiedEntrance({ ...lot, coordinateType: undefined })).toBe(false);
     expect(isVerifiedEntrance({ ...lot, coordinateType: 'representative' })).toBe(false);
     expect(isVerifiedEntrance({ ...lot, coordinateType: 'entrance' })).toBe(true);
+  });
+  it('대표 좌표가 매장 좌표일 수도 있음을 설명하고 입구 확인과 구분한다', () => {
+    const lot = {
+      ...placeParkingData[0].primaryParking[0].lot,
+      coordinateType: 'representative' as const,
+    };
+    const info = coordinateInfo(lot);
+    expect(info.label).toBe('대표 위치');
+    expect(info.description).toContain('매장 또는 주차장');
+    expect(info.action).toBe('대표 위치로 길 안내');
+    expect(coordinateInfo({ ...lot, coordinateType: undefined }).label).toBe('입구 미확인');
+  });
+  it('검색 제한은 1–50 정수만 허용한다', () => {
+    expect(searchLimit()).toBe(20);
+    expect(searchLimit(50)).toBe(50);
+    for (const invalid of [0, -1, 51, 1.5, NaN])
+      expect(() => searchLimit(invalid)).toThrow(RangeError);
   });
   it('유효하지 않은 좌표와 실행 가능한 이미지 URL을 거부한다', () => {
     const data = structuredClone(placeParkingData[0]);
@@ -70,5 +93,13 @@ describe('외부 길안내 좌표', () => {
     expect(walkingUrl(lot, data.place)).toContain('/link/by/walk/');
     expect(walkingUrl(lot, data.place)).toContain('36.8148,127.1082/');
     expect(walkingUrl(lot, data.place)).toMatch(/36\.815,127\.1085$/);
+  });
+  it('주차장에 매장 좌표가 대입된 경우 같은 지점 간 도보 링크를 만들지 않는다', () => {
+    const representative = {
+      ...lot,
+      coordinateType: 'representative' as const,
+      entranceCoordinates: data.place.coordinates,
+    };
+    expect(walkingUrl(representative, data.place)).toBeNull();
   });
 });

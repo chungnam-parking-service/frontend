@@ -12,8 +12,15 @@ describe('HTTP 어댑터', () => {
     const api = createHttpParkingApi({ baseUrl: 'https://api.example.com/', fetcher });
     await expect(api.searchPlaces(' 천안 & 카페 ')).resolves.toEqual(body);
     expect(fetcher.mock.calls[0][0]).toBe(
-      `https://api.example.com/places?query=${encodeURIComponent('천안 & 카페')}`,
+      `https://api.example.com/places?query=${encodeURIComponent('천안 & 카페')}&limit=20`,
     );
+  });
+  it('검색 제한과 전체 일치 수를 별개로 처리한다', async () => {
+    const body = { items: [placeParkingData[0].place], total: 1200 };
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json(body));
+    const api = createHttpParkingApi({ baseUrl: '/backend', fetcher });
+    await expect(api.searchPlaces('천안', undefined, { limit: 50 })).resolves.toEqual(body);
+    expect(fetcher.mock.calls[0][0]).toBe('/backend/places?query=%EC%B2%9C%EC%95%88&limit=50');
   });
   it('추가 오류 필드와 내부 메시지는 화면 문구로 노출하지 않는다', async () => {
     const fetcher = vi
@@ -77,5 +84,10 @@ describe('목 어댑터', () => {
   });
   it('없는 목적지는 404로 반환한다', async () => {
     await expect(mockParkingApi.getPlaceParking('missing')).rejects.toMatchObject({ status: 404 });
+  });
+  it('목 검색도 limit만큼 반환하면서 total은 유지한다', async () => {
+    const data = await mockParkingApi.searchPlaces('충', undefined, { limit: 1 });
+    expect(data.items).toHaveLength(1);
+    expect(data.total).toBe(3);
   });
 });

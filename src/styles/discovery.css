@@ -281,3 +281,12 @@
 .map-caption {
   margin: 11px 0 21px;
 }
+
+.search-limit-info {
+  padding: 22px 0 4px;
+  text-align: center;
+}
+.search-limit-info > .button {
+  margin-top: 14px;
+  width: 100%;
+}

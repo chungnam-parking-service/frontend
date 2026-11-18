@@ -1,4 +1,4 @@
-import type { ParkingApi } from '../domain/parking';
+import { searchLimit, type ParkingApi } from '../domain/parking';
 import { ApiError } from '../services/ApiError';
 import { placeParkingData } from './data';
 
@@ -20,7 +20,8 @@ function delay(signal?: AbortSignal) {
   });
 }
 export const mockParkingApi: ParkingApi = {
-  async searchPlaces(query, signal) {
+  async searchPlaces(query, signal, options) {
+    const limit = searchLimit(options?.limit);
     await delay(signal);
     if (query.trim().length > 100) throw new ApiError(400, '검색어는 100자 이내로 입력해 주세요.');
     const term = query.trim().replace(/\s/g, '').toLocaleLowerCase();
@@ -35,7 +36,7 @@ export const mockParkingApi: ParkingApi = {
           )
           .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
       : [];
-    return { items, total: items.length };
+    return { items: items.slice(0, limit), total: items.length };
   },
   async getPlaceParking(id, signal) {
     await delay(signal);

@@ -3,6 +3,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { ExternalLink, Flag, Footprints, ParkingCircle } from 'lucide-react';
 import {
   isVerifiedEntrance,
+  coordinateInfo,
   type PlaceParkingOption,
   type PlaceParkingResponse,
 } from '../domain/parking';
@@ -33,11 +34,12 @@ function WalkingContent({
   data: PlaceParkingResponse;
   option: PlaceParkingOption;
 }) {
+  const externalRoute = walkingUrl(option.lot, data.place);
   const points = useMemo(
     () => [
       {
         id: option.lot.id,
-        label: option.lot.name,
+        label: `${option.lot.name} · ${coordinateInfo(option.lot).label}`,
         coordinates: option.lot.entranceCoordinates,
         kind: 'parking' as const,
       },
@@ -95,7 +97,7 @@ function WalkingContent({
       </div>
       {!isVerifiedEntrance(option.lot) && (
         <Notice warning>
-          출발 위치의 실제 입구가 확인되지 않았어요. 보행자 출구와 다를 수 있어요.
+          {coordinateInfo(option.lot).description} 실제 보행자 출구도 현장에서 확인해 주세요.
         </Notice>
       )}
       <section className="detail-section">
@@ -119,17 +121,17 @@ function WalkingContent({
       </section>
       {data.isDemo ? (
         <Notice>체험용 예시 동선이에요. 실제 방문에는 사용할 수 없어요.</Notice>
-      ) : (
-        <a
-          className="button button-primary"
-          href={walkingUrl(option.lot, data.place)}
-          target="_blank"
-          rel="noreferrer"
-        >
+      ) : externalRoute ? (
+        <a className="button button-primary" href={externalRoute} target="_blank" rel="noreferrer">
           <Footprints size={18} />
           카카오맵에서 도보 길찾기
           <ExternalLink size={16} />
         </a>
+      ) : (
+        <Notice>
+          주차장 위치가 목적지와 동일하게 등록되어 있어요. 도보 길찾기 대신 등록된 안내와 현장
+          표지판을 확인해 주세요.
+        </Notice>
       )}
     </div>
   );
