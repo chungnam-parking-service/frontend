@@ -22,7 +22,7 @@ export function SearchForm({
       <Search size={20} aria-hidden="true" />
       <input
         aria-label="목적지 검색"
-        placeholder="어디로 가시나요? 장소나 지역 검색"
+        placeholder="충남 카페·식당 이름 또는 시·군 검색"
         value={value}
         onChange={(event) => setValue(event.target.value)}
         maxLength={100}

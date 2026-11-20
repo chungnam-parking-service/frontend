@@ -42,7 +42,7 @@ export function HomePage() {
         <SearchForm />
         <p className="search-hint">
           <MapPin size={14} />
-          천안, 아산, 공주 또는 매장명 검색
+          등록된 충남 카페·식당을 검색할 수 있어요.
         </p>
       </section>
       <section className="home-examples">

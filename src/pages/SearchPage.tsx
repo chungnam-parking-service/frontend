@@ -26,6 +26,9 @@ export function SearchPage({ forReport = false }: { forReport?: boolean }) {
       <PageHeader title={forReport ? '제보할 목적지 찾기' : '목적지 검색'} />
       <div className="page">
         <SearchForm key={query} initialValue={query} action={action} />
+        <p className="fine-print map-caption">
+          등록된 충남 카페·식당을 검색해요. 시·군과 매장명을 함께 입력해 보세요.
+        </p>
         <RequestView state={state} retry={retry}>
           {(data) => (
             <>
@@ -59,7 +62,9 @@ export function SearchPage({ forReport = false }: { forReport?: boolean }) {
                 </>
               ) : (
                 <Message title={query ? '검색 결과가 없어요' : '어디로 가실 예정인가요?'}>
-                  등록된 목적지의 이름이나 지역명으로 검색해 주세요.
+                  {query
+                    ? '아직 등록되지 않은 매장은 검색되지 않아요. 매장 이름을 확인하거나 시·군과 매장명을 함께 입력해 주세요.'
+                    : '충남 카페·식당의 이름이나 시·군으로 검색해 주세요.'}
                 </Message>
               )}
             </>
@@ -93,7 +98,9 @@ function SearchResults({
     <>
       <MapView points={points} label="검색한 목적지 위치 지도" />
       <p className="fine-print map-caption">
-        목적지를 선택하면 연결된 주차장과 주변 주차장을 확인할 수 있어요.
+        {forReport
+          ? '정보를 제보할 매장을 선택해 주세요.'
+          : '매장을 선택하면 연결된 주차장과 주변 주차장을 확인할 수 있어요.'}
       </p>
       <div className="card-list">
         {places.map((place) => (
