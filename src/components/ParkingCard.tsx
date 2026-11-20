@@ -1,6 +1,11 @@
 import { ChevronRight, Footprints, ParkingCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { coordinateInfo, relationshipLabels, type PlaceParkingOption } from '../domain/parking';
+import {
+  coordinateInfo,
+  relationshipLabels,
+  walkingTime,
+  type PlaceParkingOption,
+} from '../domain/parking';
 
 export function parkingPath(placeId: string, lotId: string, search = '') {
   return `/places/${encodeURIComponent(placeId)}/parking/${encodeURIComponent(lotId)}${search}`;
@@ -26,9 +31,7 @@ export function ParkingCard({
         <div className="parking-card-meta">
           <span>
             <Footprints size={14} />
-            {option.walkingMinutes !== null
-              ? `목적지까지 도보 ${option.walkingMinutes}분`
-              : '도보 시간 정보 없음'}
+            {`목적지까지 도보 ${walkingTime(option)}`}
           </span>
           <span>{coordinateInfo(option.lot).label}</span>
         </div>

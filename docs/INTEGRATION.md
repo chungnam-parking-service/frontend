@@ -1,6 +1,6 @@
 # 디자인·백엔드 연동
 
-최신 확인: 2026-11-18. 백엔드 커밋: `5360c73`, 명세 v1.1.
+최신 확인: 2026-11-20. 백엔드 기준: `cc98df9`, 명세 v1.4. 채팅 기능은 팀 합의로 제외.
 
 - 디자인: https://driver-rigid-05767558.figma.site/
 - 서버 명세: https://github.com/chungnam-parking-service/parking-backend/blob/main/docs/API_SPEC.md
@@ -16,6 +16,8 @@
 
 - `GET /places?query=...&limit=...`
 - `GET /places/{placeId}/parking`
+- `POST /places/{placeId}/parking/{lotId}/feedback`
+- `POST /places/{placeId}/reports`
 
 검색은 기본 20개, 최대 50개. `total`은 전체 일치 수이며 `items.length`와 다를 수 있다.
 50개 보기는 추가 페이지를 이어 붙이는 기능이 아니라 상위 결과의 조회 한도를 확대하는 기능이다.
@@ -23,7 +25,7 @@
 홈에서는 실제 서버의 시·군 검색 규칙에 맞춰 `천안`과 `limit=3`으로 조회한다.
 
 API 응답은 Zod로 검증한다. 오류 메시지는 서버 내부 메시지 대신 프론트 문구를 사용한다.
-10초 시간 초과, 화면 전환 시 취소, 오래된 요청 결과 차단, 빈 결과·404·재시도 상태를 처리한다.
+조회·JSON 전송 10초, 사진 포함 전송 30초 시간 초과, 화면 전환 시 취소, 오래된 요청 결과 차단, 빈 결과·404·재시도 상태를 처리한다.
 목 모드뿐 아니라 실제 서버의 `isDemo: true` 데이터에서도 외부 길안내를 실행하지 않는다.
 
 ## AI 데이터와 좌표 처리
@@ -43,7 +45,7 @@ v1.1의 `entranceCoordinates`는 여전히 필수 좌표 객체다. 입구가 �
 주차장과 목적지 좌표가 같으면 외부 도보 링크를 만들지 않는다. 임의의 거리·시간·경로도 만들지 않는다.
 
 주소 `""`는 주소 정보 없음, `verifiedAt: null`은 확인 시점 정보 없음으로 표시한다.
-AI가 직선거리로 추정한 도보 시간은 백엔드에서 null로 정규화하므로, 0분 등으로 바꾸지 않는다.
+`walkingMinutes`는 확인된 시간이다. 없으면 `estimatedWalkingMinutes`를 “약 N분”으로 표시하고, 두 필드가 모두 없으면 정보 없음으로 표시한다. `distanceMeters`는 직선거리로 명시한다. 대안은 확인 시간 또는 추정 시간 기준으로 정렬한다.
 시연 목 데이터도 최신 서버와 같이 `coordinateType: entrance`를 포함한다.
 
 ## 검증
@@ -69,7 +71,7 @@ BACKEND_TEST_URL=http://localhost:8080 BACKEND_AI_TESTS=1 npm test
 
 공개 HTTPS 백엔드 주소와 프론트 출처의 CORS 허용이 필요하다. 개발 프록시는 정적 배포에는 적용되지 않는다.
 실제 iOS·Android에서 내비 설치/미설치/복귀 동작은 추가 검증이 필요하다.
-사진 업로드, 사용자 등록·수정·정확도 피드백, 외부 장소 검색, 실제 도보 경로·거리, 방문 예정 시간 기반 자동 경고는 아직 서버에 없다.
+실제 보행 경로·거리와 방문 예정 시간 기반 자동 경고는 추가 연동이 필요하다. 현재 서버가 주는 운영시간 경고는 그대로 표시한다.
 
 지도는 Leaflet + OpenStreetMap, 내비는 네이버 URL Scheme과 카카오 HTTPS 링크를 사용한다.
 
@@ -77,3 +79,36 @@ BACKEND_TEST_URL=http://localhost:8080 BACKEND_AI_TESTS=1 npm test
 - 카카오: https://apis.map.kakao.com/web/guide/#routeurl
 - Leaflet: https://leafletjs.com/examples/quick-start/
 - 타일 정책: https://operations.osmfoundation.org/policies/tiles/
+
+## 피드백·제보 연결
+
+- 피드백: 맞아요는 원탭 전송, 달라요는 선택 의견(300자)을 추가해 전송. 중복 전송 409는 이미 접수한 상태로 표시한다. 전송 중 중복 클릭을 막고 화면 이동 시 요청을 취소한다. 자동 재전송은 하지 않는다.
+- 제보: `/report`에서 목적지 검색 → `/places/:placeId/report`. 상세 진입 시 `lotId`를 전달한다. 제보할 주차장이 없으면 목적지 전체/새 주차장 알림을 선택한다.
+- 비운 칸은 기존 값을 유지한다. 빈 제보, 좌표 한쪽 누락, 범위 밖 좌표, 도보 안내 10단계 초과를 검증한다.
+- 사진 없이 JSON, 사진 포함 시 `report` JSON Blob + `photo` File을 FormData로 전송한다. multipart Content-Type 경계는 브라우저가 설정한다.
+- JPG/PNG/WebP, 5MB 이하. 최종 형식 판별은 백엔드가 수행한다. 400/413/429는 입력/용량/횟수 제한 안내로 표시한다.
+- 201 응답은 검토 대기 접수증이다. 관리자 승인 전 화면 정보를 낙관적으로 변경하지 않는다. lotId 없는 새 주차장 제보는 관리자의 별도 등록이 필요하다.
+- 목 모드는 실제 전송·저장하지 않는다. 실서버의 isDemo 데이터에는 쓰기를 막는다. 관리자 키는 프론트에 포함하지 않는다.
+- 로컬 프록시 POST도 백엔드의 Origin 검사를 받는다. 개발에 사용하는 정확한 프론트 출처를 `CORS_ALLOWED_ORIGINS`에 추가해야 한다.
+- Netlify `/backend` 프록시 설정은 팀원의 최신 main 변경을 유지했다. 사용하려면 빌드 환경변수 `VITE_API_BASE_URL=/backend`가 필요하다.
+
+## 백엔드 입구 수정 오류 수정안
+
+입구 좌표 제보가 승인되어도 이전 `walkingMinutes`, `distanceMeters`, `estimatedWalkingMinutes`, 도보 단계가 남는 오류를 확인했다.
+좌표가 실제로 바뀌면 이전 확인 시간·동선을 비우고 직선거리와 추정 시간을 다시 계산한다. 같은 제보의 새 도보 단계는 적용하며, 좌표가 같으면 기존 시간을 유지한다.
+
+수정 및 회귀 테스트 3개를 [백엔드 패치](backend/refresh-walking-estimates.patch)에 포함했다. 백엔드 전체 64개 테스트를 통과했다.
+백엔드 저장소 쓰기 권한이 없어 직접 푸시하지 못했다. 백엔드 팀원이 최신 main에서 다음 명령으로 적용할 수 있다.
+
+```sh
+git am /path/to/frontend/docs/backend/refresh-walking-estimates.patch
+bash ./gradlew test --console=plain
+```
+
+2026-11-20 로컬 H2에서 사진 업로드·사진 URL 조회·승인 전 원본 유지·승인 후 정보/좌표/거리 재계산을 검증했다.
+프론트 독립 테스트 29개, 빌드와 포맷 검사를 통과했다. 모바일 브라우저에서는 실제 피드백 접수를 확인했다.
+사진 선택 브라우저 검증은 중단되었으며, 사진 업로드와 승인 반영은 직접 API 검증 결과다.
+
+최종 실연동 검사: `BACKEND_TEST_URL=http://127.0.0.1:18080 BACKEND_AI_TESTS=1 BACKEND_WRITE_TESTS=1 npm test` — 44개 모두 통과.
+공개 AI 파일 39,365건을 내려받아 `AI_CARDS_URL=file:/...`로 가져온 임시 H2 서버를 사용했다. Java의 원격 HTTPS 가져오기는 해당 환경에서 시간 초과가 나 로컬 파일로 전환했다.
+`BACKEND_WRITE_TESTS=1`은 실제 제보와 테스트 사진을 저장하므로 폐기 가능한 검증 DB에서만 사용한다. 기본 실행에서는 실연동 15개를 건너뛴다.

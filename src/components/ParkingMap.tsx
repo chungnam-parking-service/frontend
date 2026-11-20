@@ -11,16 +11,22 @@ export interface MapPoint {
 interface Props {
   points: MapPoint[];
   onSelect?: (id: string) => void;
+  onPick?: (coordinates: Coordinates) => void;
   label?: string;
 }
 
 export default function ParkingMap({
   points,
   onSelect,
+  onPick,
   label = '목적지와 주차장 위치 지도',
 }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const select = useRef(onSelect);
+  const pick = useRef(onPick);
+  useEffect(() => {
+    pick.current = onPick;
+  }, [onPick]);
   const [tileError, setTileError] = useState(false);
   useEffect(() => {
     select.current = onSelect;
@@ -28,6 +34,19 @@ export default function ParkingMap({
   useEffect(() => {
     if (!container.current || !points.length) return;
     const map = L.map(container.current, { scrollWheelZoom: false, zoomControl: false });
+    let selected: L.CircleMarker | undefined;
+    if (onPick)
+      map.on('click', (event: L.LeafletMouseEvent) => {
+        const point = event.latlng;
+        if (selected) selected.setLatLng(point);
+        else
+          selected = L.circleMarker(point, {
+            radius: 10,
+            color: '#a35c30',
+            fillOpacity: 0.7,
+          }).addTo(map);
+        pick.current?.({ latitude: point.lat, longitude: point.lng });
+      });
     L.control
       .zoom({ position: 'bottomright', zoomInTitle: '확대', zoomOutTitle: '축소' })
       .addTo(map);
@@ -72,7 +91,7 @@ export default function ParkingMap({
       resize.disconnect();
       map.remove();
     };
-  }, [points, Boolean(onSelect)]);
+  }, [points, Boolean(onSelect), Boolean(onPick)]);
   return (
     <div className="map-frame">
       <div ref={container} className="parking-map" role="region" aria-label={label} />

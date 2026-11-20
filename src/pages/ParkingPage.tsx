@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { Camera, Clock3, Footprints, MapPin, ShieldCheck, Ticket } from 'lucide-react';
 import {
   formatVerifiedAt,
+  walkingTime,
   coordinateInfo,
   isVerifiedEntrance,
   relationshipLabels,
@@ -15,6 +16,7 @@ import { ParkingResource } from '../components/ParkingResource';
 import { NavigationButton } from '../components/NavigationButton';
 import { MapView } from '../components/MapView';
 import { Notice } from '../components/Feedback';
+import { AccuracyFeedback } from '../components/AccuracyFeedback';
 
 export function ParkingPage() {
   const { placeId = '' } = useParams();
@@ -134,9 +136,14 @@ function ParkingContent({
         <Link to={walkPath} className="walking-link">
           <Footprints size={19} />
           <span>{data.place.name}까지 도보 안내</span>
-          <strong>
-            {option.walkingMinutes !== null ? `${option.walkingMinutes}분` : '정보 확인'}
-          </strong>
+          <strong>{walkingTime(option)}</strong>
+        </Link>
+        <AccuracyFeedback placeId={data.place.id} lotId={lot.id} isDemo={data.isDemo} />
+        <Link
+          className="button button-secondary"
+          to={`/places/${encodeURIComponent(data.place.id)}/report?${new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(search)), lotId: lot.id })}`}
+        >
+          주차 정보 수정 제보
         </Link>
         <div className="freshness">
           <ShieldCheck size={15} />

@@ -9,10 +9,12 @@ export function PlaceCard({
   place,
   featured = false,
   search = '',
+  forReport = false,
 }: {
   place: Place;
   featured?: boolean;
   search?: string;
+  forReport?: boolean;
 }) {
   const Icon = place.category.includes('카페')
     ? Coffee
@@ -21,7 +23,7 @@ export function PlaceCard({
       : place.category.includes('음식')
         ? Utensils
         : MapPin;
-  const to = `/places/${encodeURIComponent(place.id)}${search}`;
+  const to = `/places/${encodeURIComponent(place.id)}${forReport ? '/report' : ''}${search}`;
   return (
     <Link className={`place-card${featured ? ' place-featured' : ''}`} to={to}>
       {featured && (

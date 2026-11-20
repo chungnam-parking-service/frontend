@@ -5,15 +5,17 @@ import { useNavigate } from 'react-router-dom';
 export function SearchForm({
   initialValue = '',
   autoFocus = false,
+  action = '/search',
 }: {
   initialValue?: string;
   autoFocus?: boolean;
+  action?: string;
 }) {
   const [value, setValue] = useState(initialValue);
   const navigate = useNavigate();
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (value.trim()) navigate(`/search?q=${encodeURIComponent(value.trim())}`);
+    if (value.trim()) navigate(`${action}?q=${encodeURIComponent(value.trim())}`);
   }
   return (
     <form className="search-form" role="search" onSubmit={submit}>

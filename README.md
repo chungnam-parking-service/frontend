@@ -28,10 +28,12 @@ npm run format:check
 
 백엔드 계약: [parking-backend/docs/API_SPEC.md](https://github.com/chungnam-parking-service/parking-backend/blob/main/docs/API_SPEC.md).
 
-프론트가 사용하는 API는 두 개입니다.
+프론트가 사용하는 API는 다음과 같습니다.
 
-- `GET /places?query=검색어`
+- `GET /places?query=검색어&limit=20`
 - `GET /places/{placeId}/parking`
+- `POST /places/{placeId}/parking/{lotId}/feedback`
+- `POST /places/{placeId}/reports` (JSON / 사진 포함 multipart)
 
 `.env.example`을 참고해 `.env.local`을 작성합니다. 로컬에서는 Vite 프록시 연결을 권장합니다.
 
@@ -81,7 +83,7 @@ API 응답을 런타임에도 검증하며, 페이지는 API URL·응답 파싱�
 - 내비 앱 기본 선택은 이 브라우저의 localStorage에만 저장합니다.
 - 실제 앱 실행·앱 복귀는 iOS·Android 실기기에서 추가 검증해야 합니다.
 - 주차장과 목적지의 좌표가 같으면 외부 도보 길찾기 링크를 제공하지 않습니다.
-- 현재 API에는 도보 거리·경로선이 없습니다. 지도에는 출발·도착 핀만 표시하고 가짜 경로를 그리지 않습니다.
+- 도보 시간은 확인된 `walkingMinutes`를 우선하며, 추정값은 “약 N분”으로 표시합니다. `distanceMeters`는 직선거리이며 실제 보행 거리가 아닙니다. 지도에는 출발·도착 핀을 표시합니다.
 
 지도 타일은 [OSM 이용 정책](https://operations.osmfoundation.org/policies/tiles/)을 따릅니다. 트래픽이 큰 운영 서비스에서는 사용량에 맞는 타일 제공자를 선정하세요.
 
@@ -94,6 +96,9 @@ BACKEND_TEST_URL=http://localhost:8080 npm test
 
 # AI 데이터 가져오기가 완료된 검증 서버에서 추가 실행
 BACKEND_TEST_URL=http://localhost:8080 BACKEND_AI_TESTS=1 npm test
+
+# 폐기 가능한 검증 DB에서만 사진·제보 쓰기 테스트까지 실행
+BACKEND_TEST_URL=http://localhost:8080 BACKEND_AI_TESTS=1 BACKEND_WRITE_TESTS=1 npm test
 ```
 
 기본 `npm test`는 외부 서버가 필요 없는 테스트만 실행합니다. `BACKEND_TEST_URL`을 지정하면 실제 시연 목적지 세 곳의 응답과 프론트 목 데이터 일치, 검색, 404까지 검사합니다.
@@ -101,14 +106,18 @@ BACKEND_TEST_URL=http://localhost:8080 BACKEND_AI_TESTS=1 npm test
 ## 배포
 
 Netlify: `npm run build` 후 `dist` 업로드 또는 Git 연동(Build: `npm run build`, Publish: `dist`).
+Netlify에서는 팀원이 설정한 `/backend` 프록시를 사용할 수 있습니다. 이때 빌드 환경변수는 `VITE_API_BASE_URL=/backend`로 지정합니다.
 `public/_redirects`가 빌드에 복사되므로 상세 주소로 직접 접속·새로고침할 수 있습니다.
 Vercel에서도 `vercel.json`의 SPA rewrite를 사용합니다.
 환경변수를 바꾸면 다시 빌드·배포해야 합니다.
 
 ## 범위와 남은 서버 작업
 
-등록·수정·정확도 피드백, 외부 장소 검색, 실제 보행 경로·거리, 사진 업로드, 방문 예정 시간에 따른 자동 경고는 백엔드 미구현입니다.
-등록 메뉴는 준비 안내로 연결하며 저장 완료를 가장하지 않습니다.
+정확도 피드백과 주차 정보 제보(입구 사진·좌표·이용 조건·도보 안내)를 지원합니다.
+메뉴 또는 목적지·주차장 상세에서 제보할 수 있고, 관리자 확인 전에는 기존 정보를 바꾸지 않습니다.
+체험 모드의 제출은 화면 체험이며 실제 저장되지 않습니다. 실제 서버의 예시 데이터에는 제보를 막습니다.
+사진은 JPG/PNG/WebP, 5MB 이하이며 파일 선택 후 미리보기·삭제가 가능합니다.
+채팅은 팀 합의로 제외했습니다. 실제 보행 경로와 방문 예정 시간 기반 자동 경고는 추가 서버 작업이 필요합니다.
 
 검색은 기본 20개, 최대 50개까지 조회합니다. 전체 일치 수와 표시 건수를 구분하며 50개를 넘으면 검색어를 구체화하도록 안내합니다. 검색어와 조회 제한은 상세 화면에서 돌아갈 때도 유지됩니다.
 

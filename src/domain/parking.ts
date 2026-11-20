@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { ContributionApi } from './contributions';
 
 export const coordinatesSchema = z.object({
   latitude: z.number().finite().min(-90).max(90),
@@ -40,6 +41,8 @@ export const parkingOptionSchema = z.object({
   validationInstructions: z.string().nullable(),
   walkingMinutes: z.number().finite().nonnegative().nullable(),
   walkingSteps: z.array(z.string()),
+  distanceMeters: z.number().int().nonnegative().optional(),
+  estimatedWalkingMinutes: z.number().int().nonnegative().optional(),
 });
 
 export const placeParkingSchema = z.object({
@@ -75,7 +78,7 @@ export function searchLimit(limit = DEFAULT_SEARCH_LIMIT) {
   return limit;
 }
 
-export interface ParkingApi {
+export interface ParkingApi extends ContributionApi {
   searchPlaces(
     query: string,
     signal?: AbortSignal,
@@ -98,13 +101,24 @@ export const relationshipLabels: Record<PlaceParkingOption['relationship'], stri
 export function getParkingOptions(data: PlaceParkingResponse) {
   const seen = new Set<string>();
   const alternatives = [...data.alternatives].sort(
-    (a, b) => (a.walkingMinutes ?? Number.MAX_VALUE) - (b.walkingMinutes ?? Number.MAX_VALUE),
+    (a, b) =>
+      (a.walkingMinutes ?? a.estimatedWalkingMinutes ?? Infinity) -
+      (b.walkingMinutes ?? b.estimatedWalkingMinutes ?? Infinity),
   );
   return [...data.primaryParking, ...alternatives].filter(({ lot }) => {
     if (seen.has(lot.id)) return false;
     seen.add(lot.id);
     return true;
   });
+}
+export function walkingTime(option: PlaceParkingOption) {
+  if (option.walkingMinutes !== null) return `${option.walkingMinutes}분`;
+  if (option.estimatedWalkingMinutes !== undefined) return `약 ${option.estimatedWalkingMinutes}분`;
+  return '정보 없음';
+}
+export function straightDistance(meters?: number) {
+  if (meters === undefined) return '정보 없음';
+  return meters >= 1000 ? `약 ${(meters / 1000).toFixed(1)}km` : `약 ${meters}m`;
 }
 export function isVerifiedEntrance(lot: ParkingLot) {
   return lot.coordinateType === 'entrance';

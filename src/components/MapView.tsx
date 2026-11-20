@@ -1,5 +1,6 @@
 import { Component, lazy, Suspense, type ReactNode } from 'react';
 import type { MapPoint } from './ParkingMap';
+import type { Coordinates } from '../domain/parking';
 const ParkingMap = lazy(() => import('./ParkingMap'));
 
 class MapBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -18,6 +19,7 @@ class MapBoundary extends Component<{ children: ReactNode }, { failed: boolean }
 export function MapView(props: {
   points: MapPoint[];
   onSelect?: (id: string) => void;
+  onPick?: (coordinates: Coordinates) => void;
   label?: string;
 }) {
   return (

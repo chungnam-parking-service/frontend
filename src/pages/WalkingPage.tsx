@@ -3,6 +3,8 @@ import { useLocation, useParams } from 'react-router-dom';
 import { ExternalLink, Flag, Footprints, ParkingCircle } from 'lucide-react';
 import {
   isVerifiedEntrance,
+  walkingTime,
+  straightDistance,
   coordinateInfo,
   type PlaceParkingOption,
   type PlaceParkingResponse,
@@ -64,23 +66,19 @@ function WalkingContent({
       </div>
       <dl className="walking-stats">
         <div>
-          <dt>도보 거리</dt>
-          <dd>정보 없음</dd>
+          <dt>직선거리</dt>
+          <dd>{straightDistance(option.distanceMeters)}</dd>
         </div>
         <div>
           <dt>예상 소요 시간</dt>
-          <dd>
-            {option.walkingMinutes !== null ? (
-              <>
-                {option.walkingMinutes}
-                <span>분</span>
-              </>
-            ) : (
-              '정보 없음'
-            )}
-          </dd>
+          <dd>{walkingTime(option)}</dd>
         </div>
       </dl>
+      {option.estimatedWalkingMinutes !== undefined && option.walkingMinutes === null && (
+        <p className="fine-print">
+          직선거리로 추정한 시간이에요. 실제 보행 경로와 횡단보도 등에 따라 달라져요.
+        </p>
+      )}
       <div className="route-endpoints">
         <div>
           <ParkingCircle size={19} />

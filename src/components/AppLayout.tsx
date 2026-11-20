@@ -33,7 +33,7 @@ export function AppLayout() {
             </summary>
             <nav aria-label="주 메뉴">
               <Link to="/about">서비스 소개</Link>
-              <Link to="/about#registration">주차 정보 등록 안내</Link>
+              <Link to="/report">주차 정보 등록·수정</Link>
             </nav>
           </details>
         </header>

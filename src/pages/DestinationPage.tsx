@@ -95,6 +95,12 @@ function DestinationContent({ data }: { data: PlaceParkingResponse }) {
           </Link>
         </section>
       )}
+      <Link
+        className="button button-secondary"
+        to={`/places/${encodeURIComponent(place.id)}/report${search}`}
+      >
+        주차 정보 등록·수정 제보
+      </Link>
     </div>
   );
 }

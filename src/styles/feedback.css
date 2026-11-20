@@ -60,3 +60,100 @@
   width: 100%;
   margin-top: 20px;
 }
+
+.contribution-panel {
+  margin: 28px 0 18px;
+  padding: 20px;
+  border: 1px solid #e0e8da;
+  border-radius: 16px;
+  background: #f8faf5;
+}
+.contribution-panel h2 {
+  font-size: 15px;
+  margin: 0 0 16px;
+}
+.contribution-panel p,
+.report-receipt p {
+  font-size: 13px;
+  line-height: 1.9;
+}
+.feedback-buttons,
+.coordinate-fields {
+  display: flex;
+  gap: 10px;
+}
+.feedback-buttons > *,
+.coordinate-fields > * {
+  flex: 1;
+  min-width: 0;
+}
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 20px 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.form-field h3 {
+  font-size: 13px;
+  margin: 0;
+}
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 12px;
+  border: 1px solid #d8e2d0;
+  border-radius: 10px;
+  background: white;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+}
+.form-field textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+.coordinate-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.report-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.report-form > .button,
+.contribution-panel form > .button {
+  width: 100%;
+}
+.report-form {
+  margin-bottom: 30px;
+}
+.form-error {
+  color: #9c442e;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.report-photo img {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.report-receipt {
+  padding: 32px 0;
+}
+.report-receipt h2 {
+  font-size: 22px;
+}
+.report-receipt .button {
+  margin-top: 20px;
+  width: 100%;
+}

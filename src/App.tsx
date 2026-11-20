@@ -6,6 +6,7 @@ import { SearchPage } from './pages/SearchPage';
 import { DestinationPage } from './pages/DestinationPage';
 import { ParkingPage } from './pages/ParkingPage';
 import { WalkingPage } from './pages/WalkingPage';
+import { ReportPage } from './pages/ReportPage';
 import { AboutPage } from './pages/AboutPage';
 
 export default function App() {
@@ -13,6 +14,8 @@ export default function App() {
     <Routes>
       <Route element={<AppLayout />}>
         <Route index element={<HomePage />} />
+        <Route path="report" element={<SearchPage forReport />} />
+        <Route path="places/:placeId/report" element={<ReportPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="places/:placeId" element={<DestinationPage />} />
         <Route path="places/:placeId/parking/:lotId" element={<ParkingPage />} />

@@ -26,9 +26,12 @@ export function AboutPage() {
         <section id="registration">
           <h3>주차 정보 등록 안내</h3>
           <p>
-            현재는 등록·수정 접수 기능을 준비하고 있어요. 매장별 입구 사진과 좌표, 주차 혜택, 등록
-            방법을 확인한 뒤 제공할 예정이에요.
+            목적지를 검색해 입구 사진과 좌표, 주차 요금과 혜택, 등록 방법을 제보할 수 있어요.
+            보내주신 정보는 관리자 확인 후 반영돼요.
           </p>
+          <Link className="button button-secondary" to="/report">
+            주차 정보 제보하기
+          </Link>
         </section>
         <Link className="button button-primary" to="/">
           목적지 찾아보기

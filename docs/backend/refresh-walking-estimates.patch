@@ -1,0 +1,132 @@
+From 6eca39c5affd007efa8d430a7732ef26997d17d1 Mon Sep 17 00:00:00 2001
+From: TaehyunJeon <jeontaehyun0203@gmail.com>
+Date: Fri, 20 Nov 2026 10:41:14 +0900
+Subject: [PATCH] fix: refresh walking data after entrance corrections
+
+---
+ .../parking/report/ReportOverlay.java         | 33 ++++++++++---
+ .../parking/report/ReportOverlayTest.java     | 48 +++++++++++++++++++
+ 2 files changed, 75 insertions(+), 6 deletions(-)
+ create mode 100644 src/test/java/com/chungnam/parking/report/ReportOverlayTest.java
+
+diff --git a/src/main/java/com/chungnam/parking/report/ReportOverlay.java b/src/main/java/com/chungnam/parking/report/ReportOverlay.java
+index 413d1de..d938778 100644
+--- a/src/main/java/com/chungnam/parking/report/ReportOverlay.java
++++ b/src/main/java/com/chungnam/parking/report/ReportOverlay.java
+@@ -44,12 +44,21 @@ public class ReportOverlay {
+                 response.place(),
+                 response.placeHoursDescription(),
+                 response.operatingHoursWarning(),
+-                response.primaryParking().stream().map(o -> overlay(o, byLot.get(o.lot().id()))).toList(),
+-                response.alternatives().stream().map(o -> overlay(o, byLot.get(o.lot().id()))).toList(),
++                response.primaryParking().stream().map(o -> overlay(o, byLot.get(o.lot().id()), response.place().coordinates())).toList(),
++                response.alternatives().stream().map(o -> overlay(o, byLot.get(o.lot().id()), response.place().coordinates())).toList(),
+                 response.isDemo());
+     }
+ 
+-    private PlaceParkingOption overlay(PlaceParkingOption option, List<ParkingReport> reports) {
++    private static double distanceBetween(Coordinates from, Coordinates to) {
++        double latDelta = Math.toRadians(to.latitude() - from.latitude());
++        double lngDelta = Math.toRadians(to.longitude() - from.longitude());
++        double a = Math.pow(Math.sin(latDelta / 2), 2)
++                + Math.cos(Math.toRadians(from.latitude())) * Math.cos(Math.toRadians(to.latitude()))
++                * Math.pow(Math.sin(lngDelta / 2), 2);
++        return 6_371_000 * 2 * Math.asin(Math.sqrt(Math.min(1, a)));
++    }
++
++    private PlaceParkingOption overlay(PlaceParkingOption option, List<ParkingReport> reports, Coordinates destination) {
+         if (reports == null || reports.isEmpty()) {
+             return option;
+         }
+@@ -63,11 +72,23 @@ public class ReportOverlay {
+         String benefit = option.benefitDescription();
+         String validation = option.validationInstructions();
+         List<String> steps = option.walkingSteps();
++        Integer walkingMinutes = option.walkingMinutes();
++        Integer distanceMeters = option.distanceMeters();
++        Integer estimatedMinutes = option.estimatedWalkingMinutes();
+         java.time.OffsetDateTime verifiedAt = lot.verifiedAt();
+ 
+         for (ParkingReport r : reports) {
+             if (r.hasEntrance()) {
+-                entrance = new Coordinates(r.getEntranceLatitude(), r.getEntranceLongitude());
++                Coordinates corrected = new Coordinates(r.getEntranceLatitude(), r.getEntranceLongitude());
++                if (!corrected.equals(entrance)) {
++                    // 이전 입구에서 확인된 시간·동선은 새 입구에 사용할 수 없다.
++                    walkingMinutes = null;
++                    steps = List.of();
++                    double meters = distanceBetween(corrected, destination);
++                    distanceMeters = (int) Math.round(meters);
++                    estimatedMinutes = (int) Math.max(1, Math.round(meters * 1.3 / 75));
++                }
++                entrance = corrected;
+                 coordinateType = "entrance";
+             }
+             if (r.getPhotoPath() != null) photo = publicUrl.of(r.getPhotoPath());
+@@ -82,7 +103,7 @@ public class ReportOverlay {
+ 
+         ParkingLotDto newLot = new ParkingLotDto(lot.id(), lot.name(), lot.address(), entrance, photo, guide,
+                 fee, hours, verifiedAt, coordinateType);
+-        return new PlaceParkingOption(newLot, option.relationship(), benefit, validation, option.walkingMinutes(),
+-                steps, option.distanceMeters(), option.estimatedWalkingMinutes());
++        return new PlaceParkingOption(newLot, option.relationship(), benefit, validation, walkingMinutes,
++                steps, distanceMeters, estimatedMinutes);
+     }
+ }
+diff --git a/src/test/java/com/chungnam/parking/report/ReportOverlayTest.java b/src/test/java/com/chungnam/parking/report/ReportOverlayTest.java
+new file mode 100644
+index 0000000..71dd616
+--- /dev/null
++++ b/src/test/java/com/chungnam/parking/report/ReportOverlayTest.java
+@@ -0,0 +1,48 @@
++package com.chungnam.parking.report;
++
++import com.chungnam.parking.place.dto.PlaceDtos.*;
++import org.junit.jupiter.api.Test;
++import java.time.LocalDateTime;
++import java.util.List;
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Mockito.*;
++
++class ReportOverlayTest {
++    private final ParkingReportRepository repository = mock(ParkingReportRepository.class);
++    private final ReportOverlay overlay = new ReportOverlay(repository, new PublicUrl("https://example.com"));
++    private final Coordinates original = new Coordinates(36.8, 127.1);
++
++    private PlaceParkingOption apply(Coordinates corrected, List<String> steps) {
++        var lot = new ParkingLotDto("lot", "주차장", "주소", original, null, null, null, null, null, "entrance");
++        var option = new PlaceParkingOption(lot, "nearby", null, null, 2, List.of("기존 입구 동선"), 100, 2);
++        var place = new PlaceDto("place", "목적지", "", "", original, "available", "");
++        var report = new ParkingReport("place", "lot", null, null, null, null, null, steps,
++                corrected.latitude(), corrected.longitude(), null, null, "client", LocalDateTime.now());
++        report.approve(LocalDateTime.now(), null);
++        when(repository.findByPlaceIdAndStatusOrderByReviewedAtAscIdAsc("place", ReportStatus.APPROVED))
++                .thenReturn(List.of(report));
++        return overlay.apply(new PlaceParkingResponse(place, null, null, List.of(option), List.of(), false)).primaryParking().get(0);
++    }
++
++    @Test void changedEntranceReplacesStaleEstimatesAndClearsConfirmedRoute() {
++        var result = apply(new Coordinates(36.801, 127.1), List.of());
++        assertThat(result.walkingMinutes()).isNull();
++        assertThat(result.walkingSteps()).isEmpty();
++        assertThat(result.distanceMeters()).isEqualTo(111);
++        assertThat(result.estimatedWalkingMinutes()).isEqualTo(2);
++    }
++
++    @Test void newStepsCanReplaceTheOldRouteInTheSameReport() {
++        var result = apply(new Coordinates(36.802, 127.1), List.of("새 입구 동선"));
++        assertThat(result.walkingSteps()).containsExactly("새 입구 동선");
++        assertThat(result.distanceMeters()).isEqualTo(222);
++        assertThat(result.estimatedWalkingMinutes()).isEqualTo(4);
++    }
++
++    @Test void unchangedEntrancePreservesConfirmedRoute() {
++        var result = apply(original, List.of());
++        assertThat(result.walkingMinutes()).isEqualTo(2);
++        assertThat(result.walkingSteps()).containsExactly("기존 입구 동선");
++        assertThat(result.distanceMeters()).isEqualTo(100);
++    }
++}
+-- 
+2.56.0
+

@@ -1,6 +1,9 @@
 import { searchLimit, type ParkingApi } from '../domain/parking';
 import { ApiError } from '../services/ApiError';
 import { placeParkingData } from './data';
+import { validateReport } from '../domain/contributions';
+
+let nextReceiptId = 1;
 
 function delay(signal?: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
@@ -20,6 +23,35 @@ function delay(signal?: AbortSignal) {
   });
 }
 export const mockParkingApi: ParkingApi = {
+  async sendFeedback(placeId, lotId, input, signal) {
+    const data = await this.getPlaceParking(placeId, signal);
+    if (![...data.primaryParking, ...data.alternatives].some(({ lot }) => lot.id === lotId))
+      throw new ApiError(404, '주차장을 찾을 수 없어요.');
+    return {
+      id: nextReceiptId++,
+      placeId,
+      lotId,
+      accurate: input.accurate,
+      createdAt: new Date().toISOString(),
+    };
+  },
+  async sendReport(placeId, input, photo, signal) {
+    validateReport(input, photo);
+    const data = await this.getPlaceParking(placeId, signal);
+    if (
+      input.lotId &&
+      ![...data.primaryParking, ...data.alternatives].some(({ lot }) => lot.id === input.lotId)
+    )
+      throw new ApiError(404, '주차장을 찾을 수 없어요.');
+    return {
+      id: nextReceiptId++,
+      status: 'pending',
+      placeId,
+      lotId: input.lotId ?? null,
+      photoUrl: null,
+      createdAt: new Date().toISOString(),
+    };
+  },
   async searchPlaces(query, signal, options) {
     const limit = searchLimit(options?.limit);
     await delay(signal);

@@ -9,7 +9,8 @@ import { useRequest } from '../hooks/useRequest';
 import { parkingApi } from '../services/parkingApi';
 import { DEFAULT_SEARCH_LIMIT, MAX_SEARCH_LIMIT, type Place } from '../domain/parking';
 
-export function SearchPage() {
+export function SearchPage({ forReport = false }: { forReport?: boolean }) {
+  const action = forReport ? '/report' : '/search';
   const [params] = useSearchParams();
   const query = params.get('q')?.trim() ?? '';
   const limit =
@@ -22,9 +23,9 @@ export function SearchPage() {
   const search = `?${new URLSearchParams({ q: query, limit: String(limit) })}`;
   return (
     <>
-      <PageHeader title="목적지 검색" />
+      <PageHeader title={forReport ? '제보할 목적지 찾기' : '목적지 검색'} />
       <div className="page">
-        <SearchForm key={query} initialValue={query} />
+        <SearchForm key={query} initialValue={query} action={action} />
         <RequestView state={state} retry={retry}>
           {(data) => (
             <>
@@ -34,7 +35,7 @@ export function SearchPage() {
               </div>
               {data.items.length ? (
                 <>
-                  <SearchResults places={data.items} search={search} />
+                  <SearchResults places={data.items} search={search} forReport={forReport} />
                   {data.total > data.items.length && (
                     <div className="search-limit-info">
                       <p className="muted">
@@ -44,7 +45,7 @@ export function SearchPage() {
                       {limit < MAX_SEARCH_LIMIT && data.items.length < MAX_SEARCH_LIMIT ? (
                         <Link
                           className="button button-secondary"
-                          to={`/search?${new URLSearchParams({ q: query, limit: String(MAX_SEARCH_LIMIT) })}`}
+                          to={`${action}?${new URLSearchParams({ q: query, limit: String(MAX_SEARCH_LIMIT) })}`}
                         >
                           최대 50곳까지 보기
                         </Link>
@@ -69,7 +70,15 @@ export function SearchPage() {
   );
 }
 
-function SearchResults({ places, search }: { places: Place[]; search: string }) {
+function SearchResults({
+  places,
+  search,
+  forReport,
+}: {
+  places: Place[];
+  search: string;
+  forReport: boolean;
+}) {
   const points = useMemo(
     () =>
       places.map((place) => ({
@@ -88,7 +97,7 @@ function SearchResults({ places, search }: { places: Place[]; search: string }) 
       </p>
       <div className="card-list">
         {places.map((place) => (
-          <PlaceCard key={place.id} place={place} search={search} />
+          <PlaceCard key={place.id} place={place} search={search} forReport={forReport} />
         ))}
       </div>
     </>
